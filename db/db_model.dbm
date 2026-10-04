@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+CAUTION: Do not modify this file unless you know what you are doing.
+ Unexpected results may occur if the code is changed deliberately.
+-->
+<dbmodel pgmodeler-ver="1.1.4" use-changelog="false" max-obj-count="4"
+	 last-position="0,254" last-zoom="0.85" scene-rect="0,0,1821.38,1450.72"
+	 default-schema="public" default-owner="postgres"
+	 layers="Default layer"
+	 active-layers="0"
+	 layer-name-colors="#000000"
+	 layer-rect-colors="#b4b4b4"
+	 show-layer-names="false" show-layer-rects="false">
+<database name="accident-manager-db" is-template="false" allow-conns="true">
+</database>
+
+<schema name="public" layers="0" fill-color="#e1e1e1" name-color="#000000" sql-disabled="true">
+</schema>
+
+<extension name="postgis">
+	<schema name="public"/>
+</extension>
+
+<usertype name="user_role" configuration="enumeration">
+	<schema name="public"/>
+	<enumeration label="admin"/>
+	<enumeration label="user"/>
+</usertype>
+
+<usertype name="accident_status" configuration="enumeration">
+	<schema name="public"/>
+	<enumeration label="pending"/>
+	<enumeration label="in_progress"/>
+	<enumeration label="resolved"/>
+</usertype>
+
+<table name="users" layers="0" collapse-mode="2" max-obj-count="7" z-value="0">
+	<schema name="public"/>
+	<position x="940" y="300"/>
+	<column name="user_id" not-null="true" default-value="gen_random_uuid()">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="email" not-null="true">
+		<type name="varchar" length="0"/>
+	</column>
+	<column name="password_hash" not-null="true">
+		<type name="varchar" length="0"/>
+	</column>
+	<column name="role" default-value="'user'">
+		<type name="public.user_role" length="0"/>
+	</column>
+	<column name="is_active" default-value="true">
+		<type name="boolean" length="0"/>
+	</column>
+	<column name="created_at" default-value="CURRENT_TIMESTAMP">
+		<type name="timestamptz" length="0"/>
+	</column>
+	<constraint name="users_pk" type="pk-constr" table="public.users">
+		<columns names="user_id" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="email_uq" type="uq-constr" table="public.users">
+		<columns names="email" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="accidents" layers="0" collapse-mode="2" max-obj-count="10" z-value="0">
+	<schema name="public"/>
+	<position x="380" y="280"/>
+	<column name="accident_id" not-null="true" default-value="gen_random_uuid()">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="reporter_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="title" not-null="true">
+		<type name="varchar" length="0"/>
+	</column>
+	<column name="description">
+		<type name="text" length="0"/>
+	</column>
+	<column name="status" default-value="'pending'">
+		<type name="public.accident_status" length="0"/>
+	</column>
+	<column name="is_deleted" default-value="false">
+		<type name="boolean" length="0"/>
+	</column>
+	<column name="location" not-null="true">
+		<type name="geometry" length="0" spatial-type="POINT" variation="0" srid="4326"/>
+	</column>
+	<column name="created_at" default-value="CURRENT_TIMESTAMP">
+		<type name="timestamptz" length="0"/>
+	</column>
+	<column name="updated_at" default-value="CURRENT_TIMESTAMP">
+		<type name="timestamptz" length="0"/>
+	</column>
+	<constraint name="accidents_pk" type="pk-constr" table="public.accidents">
+		<columns names="accident_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="comments" layers="0" collapse-mode="2" max-obj-count="8" z-value="0">
+	<schema name="public"/>
+	<position x="960" y="800"/>
+	<column name="comment_id" not-null="true" default-value="gen_random_uuid()">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="author_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="accident_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="content" not-null="true">
+		<type name="text" length="0"/>
+	</column>
+	<column name="is_deleted" default-value="false">
+		<type name="boolean" length="0"/>
+	</column>
+	<column name="created_at" default-value="CURRENT_TIMESTAMP">
+		<type name="timestamptz" length="0"/>
+	</column>
+	<column name="updated_at" default-value="CURRENT_TIMESTAMP">
+		<type name="timestamptz" length="0"/>
+	</column>
+	<constraint name="comments_pk" type="pk-constr" table="public.comments">
+		<columns names="comment_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<index name="accident_location_idx" table="public.accidents"
+	 concurrent="false" unique="false" fast-update="false" buffering="false" nulls-not-distinct="false"
+	 index-type="gist" factor="0">
+		<idxelement use-sorting="false">
+			<column name="location"/>
+		</idxelement>
+</index>
+
+<constraint name="reporter_id_fk" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="public.users" table="public.accidents">
+	<columns names="reporter_id" ref-type="src-columns"/>
+	<columns names="user_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="author_id_fk" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="public.users" table="public.comments">
+	<columns names="author_id" ref-type="src-columns"/>
+	<columns names="user_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="accident_id_fk" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="public.accidents" table="public.comments">
+	<columns names="accident_id" ref-type="src-columns"/>
+	<columns names="accident_id" ref-type="dst-columns"/>
+</constraint>
+
+<relationship name="rel_accidents_users" type="relfk" layers="0"
+	 src-table="public.accidents"
+	 dst-table="public.users" reference-fk="reporter_id_fk"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_comments_users" type="relfk" layers="0"
+	 src-table="public.comments"
+	 dst-table="public.users" reference-fk="author_id_fk"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_comments_accidents" type="relfk" layers="0"
+	 src-table="public.comments"
+	 dst-table="public.accidents" reference-fk="accident_id_fk"
+	 src-required="false" dst-required="true"/>
+
+</dbmodel>

@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: accident-manager-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: accident_manager
+    volumes:
+      - ./db/init-scripts:/docker-entrypoint-initdb.d/
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "9001:5432"
+    restart: unless-stopped
+
+  # backend:
+  #   build: ./backend
+  #   container_name: accident-manager-backend
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - db
+  #   env_file:
+  #     - ./backend/.env
+  #   develop:
+  #     watch:
+  #       - action: sync
+  #         path: ./backend
+  #         target: /usr/src/app
+  #       - action: rebuild
+  #         path: ./backend/package.json 
+
+  # frontend:
+  #   build: ./frontend
+  #   container_name: accident-manager-frontend
+  #   ports:
+  #     - "5173:5173"
+  #   depends_on:
+  #     - backend
+  #   develop:
+  #     watch:
+  #       - action: sync
+  #         path: ./frontend/src
+  #         target: /usr/src/app/src
+
+volumes:
+  pgdata:
