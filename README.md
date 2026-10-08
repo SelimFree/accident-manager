@@ -10,7 +10,7 @@ A smart city incident tracking and management platform with role-based routing (
 |----------|------------|
 | Database | PostgreSQL 16 + PostGIS (`postgis/postgis:16-3.4-alpine`) |
 | Frontend | React 19 (TypeScript), Vite, Tailwind CSS v4, shadcn/ui, React Router, Leaflet / React-Leaflet, Zustand, TanStack Query |
-| Backend  | Pending final selection (Node.js / Python FastAPI) |
+| Backend  | Python 3.11, FastAPI, Pydantic v2, SQLAlchemy 2.0 (asyncpg), GeoAlchemy2, Uvicorn |
 
 ---
 
@@ -119,6 +119,21 @@ accident-manager/
 │   └── init-scripts/
 │       ├── 01-schema.sql    # Tables, PostGIS setup, enums, soft-delete flags
 │       └── 02-seed.sql      # Mock users, Budapest incident coordinates, comments
+├── backend/
+│   ├── app/
+│   │   ├── api/             # Shared API infrastructure
+│   │   │   ├── dependencies.py  # Shared dependencies (e.g., get_db)
+│   │   │   └── router.py        # Master router aggregating all features
+│   │   ├── core/            # Global configs and infrastructure
+│   │   │   └── database.py      # Async SQLAlchemy engine & session maker
+│   │   ├── features/        # Feature-based modular business logic
+│   │   │   └── accidents/
+│   │   │       ├── models.py    # SQLAlchemy & GeoAlchemy2 table definitions
+│   │   │       ├── router.py    # API endpoints (HTTP transport)
+│   │   │       ├── schemas.py   # Pydantic validation models
+│   │   │       └── service.py   # Business logic & PostGIS data conversions
+│   │   └── main.py          # FastAPI application entry point
+│   └── requirements.txt     
 └── frontend/
     ├── src/
     │   ├── app/             
