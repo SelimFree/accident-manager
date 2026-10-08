@@ -13,22 +13,22 @@ services:
       - "9001:5432"
     restart: unless-stopped
 
-  # backend:
-  #   build: ./backend
-  #   container_name: accident-manager-backend
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     - db
-  #   env_file:
-  #     - ./backend/.env
-  #   develop:
-  #     watch:
-  #       - action: sync
-  #         path: ./backend
-  #         target: /usr/src/app
-  #       - action: rebuild
-  #         path: ./backend/package.json 
+  backend:
+    build: ./backend
+    container_name: accident-manager-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - ./backend/.env
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /usr/src/app
+        - action: rebuild
+          path: ./backend/package.json 
 
   # frontend:
   #   build: ./frontend

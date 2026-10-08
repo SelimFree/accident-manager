@@ -21,7 +21,6 @@ INSERT INTO public.accidents (accident_id, reporter_id, title, description, stat
     ST_SetSRID(ST_MakePoint(19.0600, 47.5000), 4326)
 );
 
--- 3. Insert Mock Comments
 INSERT INTO public.comments (comment_id, author_id, accident_id, content) VALUES
 (
     '55555555-5555-5555-5555-555555555555',
