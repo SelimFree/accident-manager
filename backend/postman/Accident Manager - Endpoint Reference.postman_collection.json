@@ -1,0 +1,976 @@
+{
+  "info": {
+    "_postman_id": "1ea59fde-65ea-4fa7-a754-d850e38e67c8",
+    "name": "Accident Manager | Endpoint Reference",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "5096688"
+  },
+  "item": [
+    {
+      "name": "01 · System",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Public. Checks the FastAPI service health and its PostgreSQL connection. Response: {status, database}."
+          },
+          "response": []
+        }
+      ],
+      "description": "1 implemented endpoint."
+    },
+    {
+      "name": "02 · Authentication",
+      "item": [
+        {
+          "name": "POST /api/auth/register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo User\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Public. Registers a new account with the user role. `name` must be 2–80 characters; email must be unique; password must be 10–128 characters. Returns 201 with UserResponse. The admin role cannot be assigned through this request."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save the JWT to the active Postman environment after a successful login.",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access_token) pm.environment.set(\"accessToken\", data.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Public. Accepts credentials as JSON, not form-data. Returns 200 with {access_token, token_type}. On success, the JWT is automatically saved to the active environment as `accessToken`. To test administrator routes, sign in here using an administrator account."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/me",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Bearer JWT required. Retrieves the signed-in user: id, name, email, role, is_active and created_at. Never returns password_hash."
+          },
+          "response": []
+        }
+      ],
+      "description": "3 implemented endpoints."
+    },
+    {
+      "name": "03 · Users",
+      "item": [
+        {
+          "name": "PATCH /api/users/me",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            },
+            "description": "Bearer JWT required. Updates only the `name` of the signed-in user. Does not allow changes to email, role or password."
+          },
+          "response": []
+        }
+      ],
+      "description": "1 implemented endpoint."
+    },
+    {
+      "name": "04 · Incidents",
+      "item": [
+        {
+          "name": "GET /api/accidents/",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "description": "Page size: 1–200",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Pagination offset: 0 or greater",
+                  "disabled": true
+                },
+                {
+                  "key": "west",
+                  "value": "18.98",
+                  "description": "Western longitude (WGS84)",
+                  "disabled": true
+                },
+                {
+                  "key": "south",
+                  "value": "47.46",
+                  "description": "Southern latitude (WGS84)",
+                  "disabled": true
+                },
+                {
+                  "key": "east",
+                  "value": "19.12",
+                  "description": "Eastern longitude (WGS84)",
+                  "disabled": true
+                },
+                {
+                  "key": "north",
+                  "value": "47.55",
+                  "description": "Northern latitude (WGS84)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Public. Lists approved incidents that have not been deleted, resolved or expired. Supports pagination and bounding-box filtering using `west`, `south`, `east`, and `north` (all four must be provided together). Returns a list of AccidentResponse objects."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/accidents/nearby",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/nearby?lat={{lat}}&lng={{lng}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "nearby"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "{{lat}}",
+                  "description": "User latitude (required)"
+                },
+                {
+                  "key": "lng",
+                  "value": "{{lng}}",
+                  "description": "User longitude (required)"
+                },
+                {
+                  "key": "radius_m",
+                  "value": "500",
+                  "description": "Radius in metres; optional, default 500",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Public. Lists approved incidents within `radius_m` metres of a point. `lat` and `lng` are required (WGS84). The default radius is 500 metres; allowed range: 20–10,000 metres."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/accidents/pending-nearby",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/pending-nearby?lat={{lat}}&lng={{lng}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "pending-nearby"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "{{lat}}",
+                  "description": "Latitude (required)"
+                },
+                {
+                  "key": "lng",
+                  "value": "{{lng}}",
+                  "description": "Longitude (required)"
+                },
+                {
+                  "key": "radius_m",
+                  "value": "500",
+                  "description": "Radius in metres (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Bearer JWT required. Lists pending incidents within the specified radius so other users can confirm them. Latitude and longitude are required. Radius: 20–1,000 metres, default 500."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/accidents/similar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/similar?lat={{lat}}&lng={{lng}}&category=road_work",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "similar"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "{{lat}}",
+                  "description": "Latitude (required)"
+                },
+                {
+                  "key": "lng",
+                  "value": "{{lng}}",
+                  "description": "Longitude (required)"
+                },
+                {
+                  "key": "category",
+                  "value": "road_work",
+                  "description": "accident | road_work | road_closure | pothole | traffic_light | other"
+                },
+                {
+                  "key": "radius_m",
+                  "value": "100",
+                  "description": "Search radius in metres (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Bearer JWT required. Suggests recent, nearby reports in the same category to help prevent duplicates. Searches reports created within the past 48 hours. `category`, `lat`, and `lng` are required; optional `radius_m`: 20–200 metres."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/accidents/mine",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "mine"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "description": "Page size: 1–200",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Pagination offset: 0 or greater",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Bearer JWT required. Lists incidents submitted by the signed-in user, including pending and rejected reports, but excluding deleted records."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/accidents/{{incidentId}}",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/{{incidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "{{incidentId}}"
+              ]
+            },
+            "description": "Public for approved incidents. Accessing a pending or rejected incident requires a JWT belonging to the reporter or an administrator. Returns 404 when the incident does not exist or is inaccessible."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/accidents/",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save the new incident UUID for subsequent incident requests.",
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.id) pm.environment.set(\"incidentId\", data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Road maintenance works\",\n  \"description\": \"Road maintenance is currently in progress\",\n  \"category\": \"road_work\",\n  \"severity\": \"medium\",\n  \"coordinates\": [\n    47.4979,\n    19.0402\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents"
+              ]
+            },
+            "description": "Bearer JWT required. Creates a pending report that is not yet visible on the public map. `coordinates` must be [latitude, longitude]. Do not send id, reporter_id, status; these are set by the backend. On success, the response `id` is saved as `incidentId`."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/accidents/{{incidentId}}/confirmations",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordinates\": [\n    47.4979,\n    19.0402\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/{{incidentId}}/confirmations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "{{incidentId}}",
+                "confirmations"
+              ]
+            },
+            "description": "Bearer JWT required. The confirming user must be different from the reporter. The incident must still be pending and the reported location must be sufficiently close to it. The reporter counts as the initial confirmation. Each user may confirm an incident only once. When the configured threshold is reached, the incident is approved automatically."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/accidents/{{incidentId}}",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated road maintenance works\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/{{incidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "{{incidentId}}"
+              ]
+            },
+            "description": "Bearer JWT required. The reporter or an administrator can edit an incident only while it is pending. All fields are optional, but at least one must be provided. Editing a report resets its confirmations."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/accidents/{{incidentId}}",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/{{incidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "{{incidentId}}"
+              ]
+            },
+            "description": "Bearer JWT required. Soft-deletes a report and returns 204 with no response body. Regular users can delete only their own pending reports; administrators can delete reports in other states."
+          },
+          "response": []
+        }
+      ],
+      "description": "10 implemented endpoints."
+    },
+    {
+      "name": "05 · Administration",
+      "item": [
+        {
+          "name": "GET /api/admin/accidents/",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/accidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "accidents"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "pending | approved | rejected | resolved; default pending",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "description": "Page size: 1–200; optional",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Administrator JWT required (`role=admin`). List non-deleted incidents; filter by `status` (pending, approved, rejected, resolved). Default is pending."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/admin/accidents/{{incidentId}}/status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/accidents/{{incidentId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "accidents",
+                "{{incidentId}}",
+                "status"
+              ]
+            },
+            "description": "Administrator JWT required (`role=admin`). Only {\"status\":\"approved\"}, {\"status\":\"rejected\"}, or {\"status\":\"resolved\"} are accepted. Allowed transitions: pending -> approved/rejected; approved -> rejected/resolved. Rejected and resolved are terminal. `pending` or `in_progress` in the request returns 422; an invalid transition returns 409. Community confirmations can also approve pending incidents. Approval records an event for future notifications but does not send Web Push."
+          },
+          "response": []
+        }
+      ],
+      "description": "2 implemented admin endpoints: a status-filtered queue and one status transition endpoint."
+    },
+    {
+      "name": "06 · Comments",
+      "item": [
+        {
+          "name": "GET /api/accidents/{incidentId}/comments",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/{{incidentId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "{{incidentId}}",
+                "comments"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Optional: 1–100; default 50",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Optional: 0 or greater; default 0",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Public for approved incidents. The reporter or an administrator can also read comments on a pending incident. Supports pagination with limit and offset. Deleted comments are excluded."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/accidents/{incidentId}/comments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.id) pm.environment.set(\"commentId\", data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"The road is still blocked near the bridge.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accidents/{{incidentId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accidents",
+                "{{incidentId}}",
+                "comments"
+              ]
+            },
+            "description": "Bearer JWT required. Adds a comment to an approved incident that is not resolved or expired. `content`: 1–2,000 characters. Returns 201 and saves `commentId` for subsequent requests."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/comments/{commentId}",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{commentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comments",
+                "{{commentId}}"
+              ]
+            },
+            "description": "Public when the parent incident is visible. Returns id, accident_id, author_id, author_name, content and timestamps, without exposing email addresses."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/comments/{commentId}",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Update: traffic has improved.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{commentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comments",
+                "{{commentId}}"
+              ]
+            },
+            "description": "Bearer JWT required. Only the comment author can edit the `content` field. Users cannot edit someone else’s comments."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/comments/{commentId}",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{commentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comments",
+                "{{commentId}}"
+              ]
+            },
+            "description": "Bearer JWT required. The comment author or an administrator may soft-delete the comment. Returns 204 with no response body."
+          },
+          "response": []
+        }
+      ],
+      "description": "5 distinct REST endpoints. Public reads where permitted; authentication required for writes. New comments are not accepted on pending or resolved incidents."
+    }
+  ]
+}
