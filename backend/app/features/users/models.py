@@ -7,19 +7,20 @@ from app.core.database import Base
 
 
 class UserRole(str, enum.Enum):
-    admin = 'admin'
-    user = 'user'
+    admin = "admin"
+    user = "user"
 
 
 class User(Base):
     __tablename__ = "users"
 
     id = Column("user_id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String, nullable=False, unique=True)
+    name = Column(String(80), nullable=False)
+    email = Column(String(200), nullable=False, unique=True)
     password_hash = Column(String, nullable=False)
-    role = Column(SQLEnum(UserRole, name="user_role"), default=UserRole.user)
-    is_active = Column(Boolean, default=True)
+    role = Column(SQLEnum(UserRole, name="user_role"), nullable=False, default=UserRole.user)
+    is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    accidents = relationship("Accident", back_populates="reporter")
+    accidents = relationship("Accident", back_populates="reporter", foreign_keys="Accident.reporter_id")
     comments = relationship("Comment", back_populates="author")
