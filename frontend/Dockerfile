@@ -1,4 +1,3 @@
-# Stage 1: Build the application
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -11,7 +10,6 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve with Nginx
 FROM nginx:alpine
 
 # Copy built assets from builder stage
