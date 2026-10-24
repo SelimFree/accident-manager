@@ -28,26 +28,23 @@ services:
         condition: service_healthy
     env_file:
       - ./backend/.env
-    develop:
-      watch:
-        - action: sync
-          path: ./backend
-          target: /usr/src/app
-        - action: rebuild
-          path: ./backend/package.json 
+    volumes:
+      - ./backend:/usr/src/app
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # frontend:
-  #   build: ./frontend
-  #   container_name: accident-manager-frontend
-  #   ports:
-  #     - "5173:5173"
-  #   depends_on:
-  #     - backend
-  #   develop:
-  #     watch:
-  #       - action: sync
-  #         path: ./frontend/src
-  #         target: /usr/src/app/src
+  frontend:
+    build: ./frontend
+    container_name: accident-manager-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata:
