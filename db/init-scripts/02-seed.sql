@@ -1,6 +1,6 @@
 INSERT INTO public.users (user_id, name, email, password_hash, role, is_active) VALUES
-('11111111-1111-1111-1111-111111111111', 'Admin', 'admin@urbanpulse.com', 'NEEDS_HASHING', 'admin', true),
-('22222222-2222-2222-2222-222222222222', 'Selim', 'selim@student.com', 'NEEDS_HASHING', 'user', true);
+('11111111-1111-1111-1111-111111111111', 'Admin', 'admin@student.com', 'NEEDS_HASHING', 'admin', true),
+('22222222-2222-2222-2222-222222222222', 'Worker', 'worker@student.com', 'NEEDS_HASHING', 'user', true);
 
 -- Note: ST_MakePoint takes (Longitude, Latitude)
 INSERT INTO public.accidents (accident_id, reporter_id, title, description, status, category, severity, location) VALUES
