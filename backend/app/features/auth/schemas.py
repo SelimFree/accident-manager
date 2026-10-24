@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from app.features.users.models import UserRole
@@ -15,7 +16,7 @@ class NamePayload(BaseModel):
 
 
 class RegisterRequest(NamePayload):
-    email: EmailStr
+    email: Annotated[EmailStr, Field(max_length=200)]
     password: str = Field(min_length=10, max_length=128)
 
 
@@ -24,7 +25,7 @@ class UpdateNameRequest(NamePayload):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: Annotated[EmailStr, Field(max_length=200)]
     password: str
 
 

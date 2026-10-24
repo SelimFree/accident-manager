@@ -2,10 +2,9 @@ from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 from pydantic import BaseModel, Field, BeforeValidator, ConfigDict, field_validator, model_validator
-from app.features.accidents.models import AccidentStatus
 
-Category = Literal["accident", "road_work", "road_closure", "pothole", "traffic_light", "other"]
-Severity = Literal["low", "medium", "high"]
+# Import the Enums we created in models.py
+from app.features.accidents.models import AccidentStatus, IncidentCategory, IncidentSeverity
 
 
 def validate_coordinates(value):
@@ -23,10 +22,10 @@ Coordinates = Annotated[tuple[float, float], BeforeValidator(validate_coordinate
 
 class AccidentCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    title: str = Field(min_length=5, max_length=160)
+    title: str = Field(min_length=5, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
-    category: Category = "other"
-    severity: Severity = "medium"
+    category: IncidentCategory = IncidentCategory.other
+    severity: IncidentSeverity = IncidentSeverity.medium
     coordinates: Coordinates = Field(description="[latitude, longitude], WGS84")
     starts_at: datetime | None = None
     ends_at: datetime | None = None
@@ -51,10 +50,10 @@ class AccidentCreate(BaseModel):
 
 class AccidentUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    title: str | None = Field(default=None, min_length=5, max_length=160)
+    title: str | None = Field(default=None, min_length=5, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
-    category: Category | None = None
-    severity: Severity | None = None
+    category: IncidentCategory | None = None
+    severity: IncidentSeverity | None = None
     coordinates: Coordinates | None = None
     starts_at: datetime | None = None
     ends_at: datetime | None = None
@@ -73,22 +72,15 @@ class AccidentResponse(BaseModel):
     reporter_id: UUID
     title: str
     description: str | None
-    category: Category
-    severity: Severity
+    category: IncidentCategory
+    severity: IncidentSeverity
     status: AccidentStatus
-    verification_source: str | None
-    confirmations_count: int
-    required_confirmations: int
     is_deleted: bool
     coordinates: Coordinates
     starts_at: datetime | None
     ends_at: datetime | None
     created_at: datetime
     updated_at: datetime
-
-
-class ConfirmationCreate(BaseModel):
-    coordinates: Coordinates = Field(description="Current GPS [latitude, longitude]")
 
 
 class StatusRequest(BaseModel):

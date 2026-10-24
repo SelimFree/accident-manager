@@ -28,14 +28,15 @@ ENUM ('admin','user');
 -- object: public.accident_status | type: TYPE --
 -- DROP TYPE IF EXISTS public.accident_status CASCADE;
 CREATE TYPE public.accident_status AS
-ENUM ('pending','in_progress','resolved');
+ENUM ('pending','rejected','approved','resolved');
 -- ddl-end --
 
 -- object: public.users | type: TABLE --
 -- DROP TABLE IF EXISTS public.users CASCADE;
 CREATE TABLE public.users (
 	user_id uuid NOT NULL DEFAULT gen_random_uuid(),
-	email varchar NOT NULL,
+	name varchar(80) NOT NULL,
+	email varchar(200) NOT NULL,
 	password_hash varchar NOT NULL,
 	role public.user_role DEFAULT 'user',
 	is_active boolean DEFAULT true,
@@ -45,20 +46,10 @@ CREATE TABLE public.users (
 );
 -- ddl-end --
 
--- object: public.accidents | type: TABLE --
--- DROP TABLE IF EXISTS public.accidents CASCADE;
-CREATE TABLE public.accidents (
-	accident_id uuid NOT NULL DEFAULT gen_random_uuid(),
-	reporter_id uuid NOT NULL,
-	title varchar NOT NULL,
-	description text,
-	status public.accident_status DEFAULT 'pending',
-	is_deleted boolean DEFAULT false,
-	location geometry(POINT, 4326) NOT NULL,
-	created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT accidents_pk PRIMARY KEY (accident_id)
-);
+-- object: public.incident_category | type: TYPE --
+-- DROP TYPE IF EXISTS public.incident_category CASCADE;
+CREATE TYPE public.incident_category AS
+ENUM ('accident','road_work','road_closure','pothole','traffic_light','other');
 -- ddl-end --
 
 -- object: public.comments | type: TABLE --
@@ -75,20 +66,40 @@ CREATE TABLE public.comments (
 );
 -- ddl-end --
 
+-- object: public.incident_severity | type: TYPE --
+-- DROP TYPE IF EXISTS public.incident_severity CASCADE;
+CREATE TYPE public.incident_severity AS
+ENUM ('low','medium','high');
+-- ddl-end --
+
+-- object: public.accidents | type: TABLE --
+-- DROP TABLE IF EXISTS public.accidents CASCADE;
+CREATE TABLE public.accidents (
+	accident_id uuid NOT NULL DEFAULT gen_random_uuid(),
+	reporter_id uuid NOT NULL,
+	title varchar(200) NOT NULL,
+	description text,
+	status public.accident_status DEFAULT 'pending',
+	category public.incident_category DEFAULT 'other',
+	severity public.incident_severity DEFAULT 'medium',
+	is_deleted boolean DEFAULT false,
+	location geometry(POINT, 4326) NOT NULL,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+	starts_at timestamptz,
+	ends_at timestamptz,
+	CONSTRAINT accidents_pk PRIMARY KEY (accident_id)
+);
+-- ddl-end --
+
 -- object: accident_location_idx | type: INDEX --
 -- DROP INDEX IF EXISTS public.accident_location_idx CASCADE;
 CREATE INDEX accident_location_idx ON public.accidents
 USING gist
 (
 	location
-);
--- ddl-end --
-
--- object: reporter_id_fk | type: CONSTRAINT --
--- ALTER TABLE public.accidents DROP CONSTRAINT IF EXISTS reporter_id_fk CASCADE;
-ALTER TABLE public.accidents ADD CONSTRAINT reporter_id_fk FOREIGN KEY (reporter_id)
-REFERENCES public.users (user_id) MATCH SIMPLE
-ON DELETE NO ACTION ON UPDATE NO ACTION;
+)
+INCLUDE (location);
 -- ddl-end --
 
 -- object: author_id_fk | type: CONSTRAINT --
@@ -102,6 +113,13 @@ ON DELETE NO ACTION ON UPDATE NO ACTION;
 -- ALTER TABLE public.comments DROP CONSTRAINT IF EXISTS accident_id_fk CASCADE;
 ALTER TABLE public.comments ADD CONSTRAINT accident_id_fk FOREIGN KEY (accident_id)
 REFERENCES public.accidents (accident_id) MATCH SIMPLE
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ddl-end --
+
+-- object: reporter_id_fk | type: CONSTRAINT --
+-- ALTER TABLE public.accidents DROP CONSTRAINT IF EXISTS reporter_id_fk CASCADE;
+ALTER TABLE public.accidents ADD CONSTRAINT reporter_id_fk FOREIGN KEY (reporter_id)
+REFERENCES public.users (user_id) MATCH SIMPLE
 ON DELETE NO ACTION ON UPDATE NO ACTION;
 -- ddl-end --
 

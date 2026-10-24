@@ -4,8 +4,6 @@ from sqlalchemy import select
 from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
 from app.features.users.models import User, UserRole
-import app.models
-
 
 async def main():
     email = os.environ.get("ADMIN_EMAIL", "").strip().lower()

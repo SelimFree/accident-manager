@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import get_db, get_current_user, get_optional_user
 from app.features.users.models import User
-from app.features.accidents.models import Accident
-from app.features.accidents.schemas import AccidentResponse, AccidentCreate, AccidentUpdate, ConfirmationCreate, Category
+from app.features.accidents.models import Accident, IncidentCategory
+from app.features.accidents.schemas import AccidentResponse, AccidentCreate, AccidentUpdate
 from app.features.accidents import service
 
 router = APIRouter(prefix="/api/accidents", tags=["Accidents"])
@@ -40,24 +40,11 @@ async def nearby(
     return await service.execute_list(db, *service.public_filter(), service.nearby_expr(lat, lng, radius_m))
 
 
-@router.get("/pending-nearby", response_model=list[AccidentResponse])
-async def pending_nearby(
-    lat: float = Query(..., ge=-90, le=90),
-    lng: float = Query(..., ge=-180, le=180),
-    radius_m: int = Query(500, ge=20, le=1000),
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    return await service.execute_list(db, Accident.is_deleted.is_(False), Accident.status == "pending",
-                                      (Accident.ends_at.is_(None) | (Accident.ends_at >= func.now())),
-                                      service.nearby_expr(lat, lng, radius_m))
-
-
 @router.get("/similar", response_model=list[AccidentResponse])
 async def similar(
     lat: float = Query(..., ge=-90, le=90),
     lng: float = Query(..., ge=-180, le=180),
-    category: Category = Query(...),
+    category: IncidentCategory = Query(...),
     radius_m: int = Query(100, ge=20, le=200),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -91,12 +78,6 @@ async def detail(incident_id: UUID, db: AsyncSession = Depends(get_db), user: Us
 async def create_incident(data: AccidentCreate, db: AsyncSession = Depends(get_db),
                           user: User = Depends(get_current_user)):
     return await service.create(db, data, user)
-
-
-@router.post("/{incident_id}/confirmations", response_model=AccidentResponse)
-async def confirm(incident_id: UUID, data: ConfirmationCreate,
-                  db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    return await service.confirm(db, incident_id, user, *data.coordinates)
 
 
 @router.patch("/{incident_id}", response_model=AccidentResponse)

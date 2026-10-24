@@ -4,11 +4,11 @@ from uuid import UUID
 from fastapi import HTTPException
 from geoalchemy2 import Geography
 from geoalchemy2.elements import WKTElement
-from sqlalchemy import select, func, cast, delete, or_
+from sqlalchemy import select, func, cast, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.features.accidents.models import Accident, AccidentStatus, IncidentConfirmation, NotificationEvent
+from app.features.accidents.models import Accident, AccidentStatus
 from app.features.accidents.schemas import AccidentCreate, AccidentUpdate
 from app.features.users.models import User, UserRole
 
@@ -27,18 +27,14 @@ def public_filter():
 
 
 async def execute_list(db: AsyncSession, *filters, limit=100, offset=0):
-    confirmation_count = (select(func.count(IncidentConfirmation.id))
-                          .where(IncidentConfirmation.accident_id == Accident.id)
-                          .correlate(Accident).scalar_subquery())
     q = (select(Accident, func.ST_Y(Accident.location).label("lat"),
-                func.ST_X(Accident.location).label("lng"),
-                confirmation_count.label("votes"))
+                func.ST_X(Accident.location).label("lng"))
          .where(*filters).order_by(Accident.created_at.desc()).offset(offset).limit(limit))
     records = (await db.execute(q)).all()
-    return [as_response(row[0], row.lat, row.lng, row.votes) for row in records]
+    return [as_response(row[0], row.lat, row.lng) for row in records]
 
 
-def as_response(accident: Accident, lat: float, lng: float, votes: int):
+def as_response(accident: Accident, lat: float, lng: float):
     return {
         "id": accident.id,
         "reporter_id": accident.reporter_id,
@@ -47,9 +43,6 @@ def as_response(accident: Accident, lat: float, lng: float, votes: int):
         "category": accident.category,
         "severity": accident.severity,
         "status": accident.status,
-        "verification_source": accident.verification_source,
-        "confirmations_count": 1 + votes,
-        "required_confirmations": get_settings().community_threshold,
         "is_deleted": accident.is_deleted,
         "coordinates": [lat, lng],
         "created_at": accident.created_at,
@@ -87,39 +80,6 @@ async def create(db: AsyncSession, payload: AccidentCreate, user: User):
     return (await execute_list(db, Accident.id == item.id, limit=1))[0]
 
 
-async def confirm(db: AsyncSession, incident_id: UUID, user: User, lat: float, lng: float):
-    """Serialize votes with a row lock so the threshold is crossed only once."""
-    item = await db.scalar(select(Accident).where(Accident.id == incident_id).with_for_update())
-    if item is None or item.is_deleted:
-        raise HTTPException(status_code=404, detail="Incident not found")
-    if item.status != AccidentStatus.pending or (item.ends_at and item.ends_at < datetime.now(timezone.utc)):
-        raise HTTPException(status_code=409, detail="This incident no longer accepts confirmations")
-    if item.reporter_id == user.id:
-        raise HTTPException(status_code=409, detail="Your report already counts as one confirmation")
-    min_age = get_settings().min_account_age_hours
-    if min_age and user.created_at > datetime.now(timezone.utc) - timedelta(hours=min_age):
-        raise HTTPException(status_code=403, detail="Account is too new to confirm")
-    existing = await db.scalar(select(IncidentConfirmation.id).where(
-        IncidentConfirmation.accident_id == incident_id, IncidentConfirmation.user_id == user.id))
-    if existing:
-        raise HTTPException(status_code=409, detail="Already confirmed by this account")
-    near = await db.scalar(select(nearby_expr(lat, lng, get_settings().confirmation_max_distance_m))
-                           .where(Accident.id == incident_id))
-    if not near:
-        raise HTTPException(status_code=403, detail="You must be near the incident to confirm it")
-    db.add(IncidentConfirmation(accident_id=incident_id, user_id=user.id))
-    await db.flush()
-    votes = await db.scalar(select(func.count(IncidentConfirmation.id)).where(
-        IncidentConfirmation.accident_id == incident_id))
-    if 1 + votes >= get_settings().community_threshold:
-        item.status = AccidentStatus.approved
-        item.verification_source = "community"
-        item.reviewed_at = datetime.now(timezone.utc)
-        db.add(NotificationEvent(accident_id=item.id, event_type="incident_approved"))
-    await db.commit()
-    return (await execute_list(db, Accident.id == incident_id, limit=1))[0]
-
-
 async def update_own(db: AsyncSession, incident_id: UUID, patch: AccidentUpdate, user: User):
     item = await db.scalar(select(Accident).where(Accident.id == incident_id).with_for_update())
     if item is None or item.is_deleted:
@@ -150,7 +110,8 @@ async def update_own(db: AsyncSession, incident_id: UUID, patch: AccidentUpdate,
         if k in {"category", "severity"} and v is None:
             raise HTTPException(status_code=422, detail=f"{k} cannot be null")
         setattr(item, k, v)
-    await db.execute(delete(IncidentConfirmation).where(IncidentConfirmation.accident_id == incident_id))
+    
+    # We no longer need to reset confirmations when a user updates their pending report
     await db.commit()
     return (await execute_list(db, Accident.id == incident_id, limit=1))[0]
 

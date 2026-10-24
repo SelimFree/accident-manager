@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.features.accidents.models import Accident, AccidentStatus
+from app.features.accidents.models import AccidentStatus
 from app.features.accidents import service as accidents_service
 from app.features.comments.models import Comment
 from app.features.users.models import User, UserRole
@@ -35,8 +35,12 @@ async def get_comment(db: AsyncSession, comment_id: UUID, viewer: User | None = 
     return to_response(row[0], row[1])
 
 
-async def list_comments(db: AsyncSession, incident_id: UUID, viewer: User | None,
-                        limit: int, offset: int) -> list[dict]:
+async def list_comments(
+    db: AsyncSession, 
+    incident_id: UUID, 
+    viewer: User | None,
+    limit: int, offset: int
+) -> list[dict]:
     await accidents_service.get_one(db, incident_id, viewer)
     rows = (await db.execute(
         select(Comment, User.name)
@@ -49,11 +53,14 @@ async def list_comments(db: AsyncSession, incident_id: UUID, viewer: User | None
 
 
 async def create_comment(db: AsyncSession, incident_id: UUID, content: str, user: User) -> dict:
-    incident = await db.get(Accident, incident_id)
-    if incident is None or incident.is_deleted or incident.status not in (AccidentStatus.approved, AccidentStatus.resolved):
-        raise HTTPException(status_code=404, detail="Incident not found")
-    if (incident.status == AccidentStatus.resolved or
-            (incident.ends_at is not None and incident.ends_at < datetime.now(timezone.utc))):
+    # Use get_one to enforce read-permissions (Admin or Reporter for pending items)
+    incident = await accidents_service.get_one(db, incident_id, user)
+    
+    if incident["status"] in (AccidentStatus.resolved, AccidentStatus.rejected):
+        raise HTTPException(status_code=409, detail="Comments are closed for this incident")
+        
+    ends_at = incident["ends_at"]
+    if ends_at is not None and ends_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=409, detail="Comments are closed for this incident")
 
     item = Comment(author_id=user.id, accident_id=incident_id, content=content)

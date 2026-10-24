@@ -9,9 +9,11 @@ router = APIRouter(prefix="/api/users", tags=["Users"])
 
 
 @router.patch("/me", response_model=UserResponse)
-async def update_my_name(payload: UpdateNameRequest,
-                         db: AsyncSession = Depends(get_db),
-                         user: User = Depends(get_current_user)):
+async def update_my_name(
+    payload: UpdateNameRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
     user.name = payload.name
     await db.commit()
     await db.refresh(user)

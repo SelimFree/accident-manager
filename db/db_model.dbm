@@ -4,7 +4,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
  Unexpected results may occur if the code is changed deliberately.
 -->
 <dbmodel pgmodeler-ver="1.1.4" use-changelog="false" max-obj-count="4"
-	 last-position="0,254" last-zoom="0.85" scene-rect="0,0,1821.38,1450.72"
+	 last-position="0,463" last-zoom="0.85" scene-rect="0,0,1821.38,1450.72"
 	 default-schema="public" default-owner="postgres"
 	 layers="Default layer"
 	 active-layers="0"
@@ -30,18 +30,22 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <usertype name="accident_status" configuration="enumeration">
 	<schema name="public"/>
 	<enumeration label="pending"/>
-	<enumeration label="in_progress"/>
+	<enumeration label="rejected"/>
+	<enumeration label="approved"/>
 	<enumeration label="resolved"/>
 </usertype>
 
-<table name="users" layers="0" collapse-mode="2" max-obj-count="7" z-value="0">
+<table name="users" layers="0" collapse-mode="2" max-obj-count="8" z-value="0">
 	<schema name="public"/>
 	<position x="940" y="300"/>
 	<column name="user_id" not-null="true" default-value="gen_random_uuid()">
 		<type name="uuid" length="0"/>
 	</column>
+	<column name="name" not-null="true">
+		<type name="varchar" length="80"/>
+	</column>
 	<column name="email" not-null="true">
-		<type name="varchar" length="0"/>
+		<type name="varchar" length="200"/>
 	</column>
 	<column name="password_hash" not-null="true">
 		<type name="varchar" length="0"/>
@@ -63,40 +67,15 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</constraint>
 </table>
 
-<table name="accidents" layers="0" collapse-mode="2" max-obj-count="10" z-value="0">
+<usertype name="incident_category" configuration="enumeration">
 	<schema name="public"/>
-	<position x="380" y="280"/>
-	<column name="accident_id" not-null="true" default-value="gen_random_uuid()">
-		<type name="uuid" length="0"/>
-	</column>
-	<column name="reporter_id" not-null="true">
-		<type name="uuid" length="0"/>
-	</column>
-	<column name="title" not-null="true">
-		<type name="varchar" length="0"/>
-	</column>
-	<column name="description">
-		<type name="text" length="0"/>
-	</column>
-	<column name="status" default-value="'pending'">
-		<type name="public.accident_status" length="0"/>
-	</column>
-	<column name="is_deleted" default-value="false">
-		<type name="boolean" length="0"/>
-	</column>
-	<column name="location" not-null="true">
-		<type name="geometry" length="0" spatial-type="POINT" variation="0" srid="4326"/>
-	</column>
-	<column name="created_at" default-value="CURRENT_TIMESTAMP">
-		<type name="timestamptz" length="0"/>
-	</column>
-	<column name="updated_at" default-value="CURRENT_TIMESTAMP">
-		<type name="timestamptz" length="0"/>
-	</column>
-	<constraint name="accidents_pk" type="pk-constr" table="public.accidents">
-		<columns names="accident_id" ref-type="src-columns"/>
-	</constraint>
-</table>
+	<enumeration label="accident"/>
+	<enumeration label="road_work"/>
+	<enumeration label="road_closure"/>
+	<enumeration label="pothole"/>
+	<enumeration label="traffic_light"/>
+	<enumeration label="other"/>
+</usertype>
 
 <table name="comments" layers="0" collapse-mode="2" max-obj-count="8" z-value="0">
 	<schema name="public"/>
@@ -134,6 +113,60 @@ CAUTION: Do not modify this file unless you know what you are doing.
 			<column name="location"/>
 		</idxelement>
 </index>
+
+<usertype name="incident_severity" configuration="enumeration">
+	<schema name="public"/>
+	<enumeration label="low"/>
+	<enumeration label="medium"/>
+	<enumeration label="high"/>
+</usertype>
+
+<table name="accidents" layers="0" collapse-mode="2" max-obj-count="15" z-value="0">
+	<schema name="public"/>
+	<position x="380" y="280"/>
+	<column name="accident_id" not-null="true" default-value="gen_random_uuid()">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="reporter_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="title" not-null="true">
+		<type name="varchar" length="200"/>
+	</column>
+	<column name="description">
+		<type name="text" length="0"/>
+	</column>
+	<column name="status" default-value="'pending'">
+		<type name="public.accident_status" length="0"/>
+	</column>
+	<column name="category" default-value="'other'">
+		<type name="public.incident_category" length="0"/>
+	</column>
+	<column name="severity" default-value="'medium'">
+		<type name="public.incident_severity" length="0"/>
+	</column>
+	<column name="is_deleted" default-value="false">
+		<type name="boolean" length="0"/>
+	</column>
+	<column name="location" not-null="true">
+		<type name="geometry" length="0" spatial-type="POINT" variation="0" srid="4326"/>
+	</column>
+	<column name="created_at" default-value="CURRENT_TIMESTAMP">
+		<type name="timestamptz" length="0"/>
+	</column>
+	<column name="updated_at" default-value="CURRENT_TIMESTAMP">
+		<type name="timestamptz" length="0"/>
+	</column>
+	<column name="starts_at">
+		<type name="timestamptz" length="0"/>
+	</column>
+	<column name="ends_at">
+		<type name="timestamptz" length="0"/>
+	</column>
+	<constraint name="accidents_pk" type="pk-constr" table="public.accidents">
+		<columns names="accident_id" ref-type="src-columns"/>
+	</constraint>
+</table>
 
 <constraint name="reporter_id_fk" type="fk-constr" comparison-type="MATCH SIMPLE"
 	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="public.users" table="public.accidents">

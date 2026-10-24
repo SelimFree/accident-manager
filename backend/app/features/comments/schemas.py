@@ -23,6 +23,8 @@ class CommentUpdate(CommentCreate):
 
 
 class CommentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: UUID
     accident_id: UUID
     author_id: UUID
