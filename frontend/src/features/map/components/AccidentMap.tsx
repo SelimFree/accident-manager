@@ -27,7 +27,7 @@ export default function AccidentMap() {
 
   const {
     data: publicAccidents = [],
-    isFetching: isPublicFetching,
+    isPending: isPublicPending,
     isError: isPublicError
   } = usePublicAccidents(filters)
 
@@ -59,7 +59,7 @@ export default function AccidentMap() {
     )
   }
 
-  const isInitialLoad = isPublicFetching && publicAccidents.length === 0
+  const isInitialLoad = isPublicPending && publicAccidents.length === 0
 
   return (
     <div className="h-full w-full relative">
