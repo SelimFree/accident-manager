@@ -14,20 +14,17 @@ export interface Accident {
   id: string
   reporter_id: string
   title: string
-  description: string
-  status: AccidentStatus
+  description: string | null
   category: IncidentCategory
   severity: IncidentSeverity
-  location: {
-    type: "Point"
-    coordinates: [number, number] // [longitude, latitude]
-  }
-  created_at: string
-  updated_at: string
+  status: AccidentStatus
+  is_deleted: boolean
+  coordinates: [number, number] // [lat, lng] WGS84
   starts_at: string | null
   ends_at: string | null
+  created_at: string
+  updated_at: string
 }
-
 export interface Comment {
   id: string
   accident_id: string
