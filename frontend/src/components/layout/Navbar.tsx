@@ -13,14 +13,22 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { LogOut, ShieldAlert, HomeIcon } from 'lucide-react'
 import RoleGuard from '@/guards/RoleGuard'
+import { useQueryClient } from '@tanstack/react-query'
+import { accidentKeys } from '@/queries/accidents/accidentKeys'
 
 export default function Navbar() {
-    const { isAuthenticated, user, logout } = useAuthStore()
+    const queryClient = useQueryClient()
     const navigate = useNavigate()
+    const logout = useAuthStore((state) => state.logout)
+    const user = useAuthStore((state) => state.user)
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
     const handleLogout = () => {
         logout()
-        navigate('/login')
+        queryClient.removeQueries({ queryKey: [...accidentKeys.all, 'mine'] })
+        queryClient.removeQueries({ queryKey: [...accidentKeys.all, 'adminQueue'] })
+        queryClient.invalidateQueries({ queryKey: accidentKeys.lists() })
+        navigate('/')
     }
 
     const initials = user?.name ? user.name.substring(0, 2).toUpperCase() : 'UP'
@@ -28,7 +36,12 @@ export default function Navbar() {
     return (
         <header className="h-14 border-b bg-white px-4 flex items-center justify-between shadow-xs sticky top-0 z-40 shrink-0">
             <div className="flex items-center gap-2">
-                <Link to="/" className="flex items-center gap-2">
+                <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+                    <img
+                        src="/android-chrome-512x512.png"
+                        alt="Accident Manager Logo"
+                        className="h-8 w-8 rounded-md object-contain shadow-sm border border-slate-200"
+                    />
                     <h1 className="font-bold text-base text-slate-800">Accident Manager</h1>
                 </Link>
             </div>
