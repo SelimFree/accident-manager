@@ -1,6 +1,6 @@
 import '@/features/map/leaflet-config'
 import { MapContainer, TileLayer } from 'react-leaflet'
-import { AlertCircle, Plus } from 'lucide-react'
+import { AlertCircle, Plus, X } from 'lucide-react'
 import PageFullScreenLoader from '@/components/layout/PageFullScreenLoader'
 import { usePublicAccidents } from '@/queries/accidents/usePublicAccidents'
 import MapFilters from '@/features/map/components//MapFilter'
@@ -8,9 +8,11 @@ import MapBoundsUpdater from '@/features/map/components/MapBoundsUpdater'
 import { useMapStore } from '@/stores/mapStore'
 import { useMyAccidents } from '@/queries/accidents/useMyAccidents'
 import { useAuthStore } from '@/stores/authStore'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { Accident } from '@/types'
 import AccidentMarker from '@/features/map/components/AccidentMarker'
+import LocationPicker from '@/features/map/components/LocationPicker'
+import ReportIncidentModal from '@/features/map/components/ReportIncidentModal'
 import {Button} from "@/components/ui/button"
 
 const INITIAL_CENTER: [number, number] = [47.4979, 19.0402]
@@ -23,7 +25,13 @@ export default function AccidentMap() {
   const activeCategories = useMapStore((state) => state.categories)
   const activeSeverities = useMapStore((state) => state.severities)
 
-  // const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [isPickingLocation, setIsPickingLocation] = useState(false)
+  const [reportCoordinates, setReportCoordinates] = useState<[number, number] | null>(null)
+
+  const handleLocationPick = (coordinates: [number, number]) => {
+    setIsPickingLocation(false)
+    setReportCoordinates(coordinates)
+  }
 
   const {
     data: publicAccidents = [],
@@ -69,18 +77,26 @@ export default function AccidentMap() {
 
       {isAuthenticated && (
         <Button
-          // onClick={() => setIsReportModalOpen(true)}
+          onClick={() => setIsPickingLocation((picking) => !picking)}
           size="icon"
+          variant={isPickingLocation ? 'outline' : 'default'}
           className="absolute bottom-6 right-6 z-1000 h-14 w-14 rounded-full shadow-xl hover:scale-105 transition-transform"
-          title="Report New Incident"
+          title={isPickingLocation ? 'Cancel' : 'Report New Incident'}
         >
-          <Plus className="h-6 w-6" />
+          {isPickingLocation ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
         </Button>
       )}
 
-      {/* {isReportModalOpen && (
-        <ReportIncidentModal onClose={() => setIsReportModalOpen(false)} />
-      )} */}
+      {isAuthenticated && isPickingLocation && (
+        <div className="absolute top-4 left-1/2 z-1000 -translate-x-1/2 rounded-full bg-slate-900/90 px-4 py-2 text-sm text-white shadow-lg">
+          Click on the map to place the incident
+        </div>
+      )}
+
+      <ReportIncidentModal
+        coordinates={reportCoordinates}
+        onClose={() => setReportCoordinates(null)}
+      />
 
       <MapContainer
         center={INITIAL_CENTER}
@@ -94,6 +110,7 @@ export default function AccidentMap() {
         />
 
         <MapBoundsUpdater />
+        <LocationPicker enabled={isAuthenticated && isPickingLocation} onPick={handleLocationPick} />
 
         {filteredAccidents.map((incident) => (
           <AccidentMarker key={incident.id} incident={incident} />
