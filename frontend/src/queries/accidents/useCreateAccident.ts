@@ -20,7 +20,6 @@ export function useCreateAccident() {
       return data
     },
     onSuccess: () => {
-      // New reports are pending, so they only show up through the reporter's own list
       queryClient.invalidateQueries({ queryKey: [...accidentKeys.all, 'mine'] })
     },
   })

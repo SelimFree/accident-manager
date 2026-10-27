@@ -23,7 +23,6 @@ export default function MapFilters() {
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent className="w-64" align="end">
-                    {/* Plain header: not a group label, so no group needed */}
                     <div className="flex items-center justify-between px-2 py-1.5">
                         <span className="text-sm font-medium">Map Filters</span>
                         <button
