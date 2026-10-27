@@ -100,6 +100,7 @@ export default function ReportIncidentModal({ coordinates, onClose }: ReportInci
             <Label htmlFor="report-description">Description</Label>
             <Textarea
               id="report-description"
+              className="resize-y w-full max-w-full h-32 overflow-y-auto"
               placeholder="What happened and how does it affect traffic?"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
