@@ -6,7 +6,16 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 import { useRegister } from '@/queries/auth/useRegister'
-import { getErrorMessage } from '@/api/axios'
+import { getErrorMessage, type ErrorMessageConfig } from '@/api/error'
+
+
+const RegisterErrors: ErrorMessageConfig = {
+  statusMessages: {
+    409: 'This email is already registered.',
+    422: 'Please check your details: name 2-80 characters, a valid email, password 10-128 characters.',
+  },
+  defaultMessage: 'Registration failed. Please try again.'
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -91,7 +100,7 @@ export default function RegisterPage() {
                 {registerMutation.isError && (
                   <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                     <AlertCircle className="h-4 w-4 shrink-0" />
-                    <p>{getErrorMessage(registerMutation.error)}</p>
+                    <p>{getErrorMessage(registerMutation.error, RegisterErrors)}</p>
                   </div>
                 )}
 

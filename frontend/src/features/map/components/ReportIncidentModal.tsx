@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { isAxiosError } from 'axios'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,22 +9,19 @@ import { AlertCircle, MapPin } from 'lucide-react'
 import { useCreateAccident } from '@/queries/accidents/useCreateAccident'
 import { CATEGORY_LABELS, SEVERITY_LABELS } from '@/features/map/incident-labels'
 import type { IncidentCategory, IncidentSeverity } from '@/types'
+import { getErrorMessage } from '@/api/error'
+
+const ReportIncidentError = {
+  statusMessages: {
+    422: 'Please check your details: title 5-200 characters, description up to 2000 characters.',
+    429: 'You have reached the hourly reporting limit. Please try again later.',
+  },
+  defaultMessage: 'Failed to submit the report. Please try again.'
+}
 
 interface ReportIncidentModalProps {
   coordinates: [number, number] | null
   onClose: () => void
-}
-
-const getErrorMessage = (error: unknown) => {
-  if (isAxiosError(error)) {
-    if (error.response?.status === 429) {
-      return 'You have reached the hourly reporting limit. Please try again later.'
-    }
-    if (error.response?.status === 422) {
-      return 'Please check your details: title 5-200 characters, description up to 2000 characters.'
-    }
-  }
-  return 'Failed to submit the report. Please try again.'
 }
 
 export default function ReportIncidentModal({ coordinates, onClose }: ReportIncidentModalProps) {
@@ -159,7 +155,7 @@ export default function ReportIncidentModal({ coordinates, onClose }: ReportInci
           {createMutation.isError && (
             <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
               <AlertCircle className="h-4 w-4 shrink-0" />
-              <p>{getErrorMessage(createMutation.error)}</p>
+              <p>{getErrorMessage(createMutation.error, ReportIncidentError)}</p>
             </div>
           )}
 
