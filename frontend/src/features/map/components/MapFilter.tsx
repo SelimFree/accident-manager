@@ -10,21 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useMapStore } from '@/stores/mapStore'
 import type { IncidentCategory, IncidentSeverity } from '@/types'
-
-const CATEGORY_LABELS: Record<IncidentCategory, string> = {
-    accident: 'Traffic Accident',
-    road_work: 'Road Work',
-    road_closure: 'Road Closure',
-    pothole: 'Pothole',
-    traffic_light: 'Broken Traffic Light',
-    other: 'Other Incident'
-}
-
-const SEVERITY_LABELS: Record<IncidentSeverity, string> = {
-    high: 'High Severity',
-    medium: 'Medium Severity',
-    low: 'Low Severity'
-}
+import { CATEGORY_LABELS, SEVERITY_LABELS } from '@/features/map/incident-labels'
 
 export default function MapFilters() {
     const { categories, severities, toggleCategory, toggleSeverity, resetFilters } = useMapStore()
@@ -37,7 +23,6 @@ export default function MapFilters() {
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent className="w-64" align="end">
-                    {/* Plain header: not a group label, so no group needed */}
                     <div className="flex items-center justify-between px-2 py-1.5">
                         <span className="text-sm font-medium">Map Filters</span>
                         <button
