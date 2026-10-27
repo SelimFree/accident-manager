@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { isAxiosError } from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -37,3 +37,15 @@ privateApi.interceptors.response.use(
         return Promise.reject(error)
     }
 )
+
+export const getErrorMessage = (error: unknown) => {
+  if (isAxiosError(error)) {
+    if (error.response?.status === 409) {
+      return 'This email is already registered.'
+    }
+    if (error.response?.status === 422) {
+      return 'Please check your details: name 2-80 characters, a valid email, password 10-128 characters.'
+    }
+  }
+  return 'Registration failed. Please try again.'
+}
