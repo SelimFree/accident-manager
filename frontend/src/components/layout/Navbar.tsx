@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
-import { buttonVariants } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import RegisterModal from '@/components/auth/RegisterModal'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
     DropdownMenu,
@@ -22,6 +24,7 @@ export default function Navbar() {
     const logout = useAuthStore((state) => state.logout)
     const user = useAuthStore((state) => state.user)
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+    const [isRegisterOpen, setIsRegisterOpen] = useState(false)
 
     const handleLogout = () => {
         logout()
@@ -52,9 +55,10 @@ export default function Navbar() {
                         <Link to="/login" className={buttonVariants({ variant: "ghost" })}>
                             Log in
                         </Link>
-                        <Link to="/register" className={buttonVariants()}>
+                        <Button onClick={() => setIsRegisterOpen(true)}>
                             Sign up
-                        </Link>
+                        </Button>
+                        <RegisterModal open={isRegisterOpen} onOpenChange={setIsRegisterOpen} />
                     </>
                 ) : (
                     <DropdownMenu>
