@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,8 +11,10 @@ from app.core.config import get_settings
 from app.core.database import AsyncSessionLocal
 from app.features.users.models import User
 from app.core.security import hash_password
+from app.features.ai.system_user import provision_system_user
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,7 +28,18 @@ async def lifespan(app: FastAPI):
         if unhashed_users:
             await db.commit()
             print(f"Secured {len(unhashed_users)} seed accounts on startup.")
-            
+
+    # Provision the AI system account when enabled.
+    if settings.ai_enabled:
+        try:
+            system_user_id = await provision_system_user()
+            logger.info("AI Safety Assistant account ready: %s", system_user_id,)
+
+        except Exception as exc:
+            logger.error("AI system account provisioning failed (%s).", type(exc).__name__,)
+    else:
+        logger.info("AI Auto-Responder is disabled.")
+
     yield
 
 app = FastAPI(title="Accident Manager API", version="0.2.0", lifespan=lifespan)
