@@ -11,6 +11,7 @@ from app.core.config import get_settings
 from app.features.accidents.models import Accident, AccidentStatus
 from app.features.accidents.schemas import AccidentCreate, AccidentUpdate
 from app.features.users.models import User, UserRole
+from app.features.ai.integration import add_automatic_comment
 
 
 def nearby_expr(lat: float, lng: float, radius_m: float):
@@ -65,10 +66,11 @@ async def get_one(db: AsyncSession, incident_id: UUID, user: User | None = None)
 
 
 async def create(db: AsyncSession, payload: AccidentCreate, user: User):
+    settings = get_settings()
     recent = await db.scalar(select(func.count(Accident.id)).where(
         Accident.reporter_id == user.id,
         Accident.created_at >= datetime.now(timezone.utc) - timedelta(hours=1)))
-    if recent >= get_settings().max_reports_per_hour:
+    if recent >= settings.max_reports_per_hour:
         raise HTTPException(status_code=429, detail="Hourly reporting limit reached")
     lat, lng = payload.coordinates
     item = Accident(reporter_id=user.id, title=payload.title, description=payload.description,
@@ -76,8 +78,18 @@ async def create(db: AsyncSession, payload: AccidentCreate, user: User):
                     ends_at=payload.ends_at, status=AccidentStatus.pending,
                     location=WKTElement(f"POINT({lng} {lat})", srid=4326))
     db.add(item)
+
+    # Generate the primary key before creating related comments.
+    await db.flush()
+    incident_id = item.id
+    if settings.ai_enabled and (
+        payload.ends_at is None or payload.ends_at >= datetime.now(timezone.utc)
+    ):
+        await add_automatic_comment(db=db, incident_id=incident_id, 
+                                    category=payload.category.value, severity=payload.severity.value)
+
     await db.commit()
-    return (await execute_list(db, Accident.id == item.id, limit=1))[0]
+    return (await execute_list(db, Accident.id == incident_id, limit=1))[0]
 
 
 async def update_own(db: AsyncSession, incident_id: UUID, patch: AccidentUpdate, user: User):

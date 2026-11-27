@@ -2,6 +2,7 @@ from functools import lru_cache
 from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, SecretStr, model_validator
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -12,6 +13,11 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = Field(default=60, ge=5, le=1440)
     cors_origins: str = "http://localhost:5173"
     max_reports_per_hour: int = Field(default=5, ge=1, le=100)
+    # AI Auto-Responder settings
+    ai_enabled: bool = False
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str = "gemini-3.5-flash-lite"
+    ai_timeout_seconds: float = Field(default=5.0, gt=0, le=30)
 
     @model_validator(mode="after")
     def valid_key(self):
